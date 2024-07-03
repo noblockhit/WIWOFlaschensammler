@@ -5,7 +5,7 @@ import time
 
 global THRESHOLD
 global BLUR
-THRESHOLD = 255
+THRESHOLD = 80
 BLUR = 35
 
 def update_THRESHOLDBar(val):
@@ -30,15 +30,13 @@ def AnalyseImage(frame):
     global THRESHOLD
     global BLUR
 
-    start1 = time.perf_counter_ns()
+    cv2.imshow("raw", frame)
+
     
     blurred = cv2.blur(frame, (BLUR*2+1, BLUR*2+1))
     mask  = np.ones((frame.shape[0],frame.shape[1]))
     mask[:,:] = 255
     
-    print(f"Time to blur: {(time.perf_counter_ns()-start1) / 1000000}ms")
-    start1 = time.perf_counter_ns()
-
     height, width, channels = frame.shape
 
     hist_b = cv2.calcHist([frame], [0], None, [256], [0, 256])
@@ -54,10 +52,11 @@ def AnalyseImage(frame):
     common_g = np.argmax(hist_g)
     common_r = np.argmax(hist_r)
     
-    print(f"Time to calculate histograms: {(time.perf_counter_ns()-start1) / 1000000}ms")
-    start1 = time.perf_counter_ns()
-
+    ref_color_space = np.ones((50, 50, 3), dtype=np.uint8)
+    ref_color_space[:, :] = [common_b, common_g, common_r]
     
+    cv2.imshow("ref color", ref_color_space)
+
     hsv_image = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
     # Convert the target BGR color to HSV
@@ -65,27 +64,27 @@ def AnalyseImage(frame):
     target_color_hsv = cv2.cvtColor(target_color_bgr, cv2.COLOR_BGR2HSV)[0][0]
 
     # Define the HSV range for the target color
-    lower_bound = np.array([target_color_hsv[0] - THRESHOLD, 50, 50])
-    upper_bound = np.array([target_color_hsv[0] + THRESHOLD, 255, 255])
+    lower_bound = np.array([max(int(target_color_hsv[0]) - THRESHOLD, 0), max(target_color_hsv[1] - THRESHOLD, 0), 50], dtype=np.uint8)
+    upper_bound = np.array([min(int(target_color_hsv[0]) + THRESHOLD, 197), min(target_color_hsv[1] + THRESHOLD, 255), 255], dtype=np.uint8)
+
+    print(lower_bound)
+    print(upper_bound)
+    print("---")
 
     # Create a mask for the target color
-    mask = cv2.inRange(hsv_image, lower_bound, upper_bound)
+    mask = cv2.bitwise_not(cv2.inRange(hsv_image, lower_bound, upper_bound))
 
-    # Invert the mask to get the areas that are not the target color
-    mask_inv = cv2.bitwise_not(mask)
-
+    cv2.imshow("mask", mask)
     # Use the inverted mask to combine the original image with the black image
     frame = cv2.bitwise_and(frame, frame, mask=mask)
-
-    print(f"Time to process image: {(time.perf_counter_ns()-start1) / 1000000}ms")
 
     return frame, mask
 
 ret, frame = vid.read()
 mask = None
 while True:
-    cv2.imshow("RichardsFensterXD",frame)
-    pressedKey = cv2.waitKey(50)
+    cv2.imshow("BrarwurstSchnitzelbroetchen",frame)
+    pressedKey = cv2.waitKey(500)
     
     ret, frame = vid.read()
     frame, mask = AnalyseImage(frame)
