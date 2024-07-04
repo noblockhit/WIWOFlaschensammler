@@ -82,9 +82,9 @@ while True:
     
     
     if features:
-        print(np.array(list(features.values())[:1]).reshape(1, 1))
-        predictions = model.predict(np.array([list(features.values())[0]]).reshape(1, 1), verbose=None)
-        # predictions = model.predict(np.array(list(features.values())).reshape(1, 6), verbose=None)
+        # print(np.array(list(features.values())[:1]).reshape(1, 1))
+        # predictions = model.predict(np.array([list(features.values())[0]]).reshape(1, 1), verbose=None)
+        predictions = model.predict(np.array(list(features.values())).reshape(1, 6), verbose=None)
         
         print(features)
         print(predictions)
