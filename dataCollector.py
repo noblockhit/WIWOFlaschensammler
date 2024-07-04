@@ -1,14 +1,11 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
 import time
 from sharedFunctions import most_frequent_color
-=======
 import os
 import re
 
->>>>>>> 5a27f583e34a3612017009e053a6bbfa761b2fa7
 
 global THRESHOLD
 global BLUR
