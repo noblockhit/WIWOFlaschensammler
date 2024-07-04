@@ -1,12 +1,16 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import time
+import os
+import re
+
 
 global THRESHOLD
 global BLUR
-THRESHOLD = 80
-BLUR = 35
+THRESHOLD = 63
+BLUR = 41
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 def update_THRESHOLDBar(val):
     global THRESHOLD     
@@ -21,7 +25,7 @@ cv2.namedWindow("Trackbars")
 cv2.createTrackbar('Threshold', "Trackbars", THRESHOLD, 100, update_THRESHOLDBar)
 cv2.createTrackbar('Blur', "Trackbars", BLUR, 50, update_BLURBar)
 
-vid = cv2.VideoCapture(1, cv2.CAP_DSHOW) 
+vid = cv2.VideoCapture(0, cv2.CAP_DSHOW) 
 
 label = input("Please provide a label for the data:")
 index = 0
@@ -99,6 +103,24 @@ while True:
     
         
     elif pressedKey == ord('s'):
+        directory_path = os.path.join(script_dir, "TrainingData")
+        
+        highest_index = -1
+        pattern = re.compile(r'.*?(\d+)$')
+        for filename in os.listdir(directory_path):
+            
+            if filename.startswith(label) and filename.endswith('.png'):
+                numbers = re.findall(r'\d+', filename)
+                numbers = [int(num) for num in numbers]
+                if numbers[0] > highest_index:
+                    highest_index = numbers[0]
+                        
+        index = highest_index + 1
+        print("pictures:", index+1)
+            
+        
+            
+            
         cv2.imwrite(f'TrainingData//{label}_{index}.png',frame)
         cv2.imwrite(f'TrainingData//{label}_{index}.mask.png',mask)
         index +=1
