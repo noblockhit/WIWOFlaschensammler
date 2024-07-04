@@ -1,8 +1,12 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 import time
-from sharedFunctions import most_frequent_color
+import os
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from sharedFunctions import most_frequent_color, getFeatures
+
+all_labels = ["braunglas", "gruenglas", "weissglas", "keinglas"]
 
 global THRESHOLD
 global BLUR
@@ -10,12 +14,10 @@ THRESHOLD = 80
 BLUR = 35
 
 def update_THRESHOLDBar(val):
-    global THRESHOLD
+    global THRESHOLD     
     THRESHOLD = val
 
-
-
-def update_BLURBar(val):
+def  update_BLURBar(val):
     global BLUR
     BLUR = val
 
@@ -26,8 +28,7 @@ cv2.createTrackbar('Blur', "Trackbars", BLUR, 50, update_BLURBar)
 
 vid = cv2.VideoCapture(1, cv2.CAP_DSHOW) 
 
-label = input("Please provide a label for the data:")
-index = 0
+model = load_model("model.keras")
 
 
 def AnalyseImage(frame):
@@ -72,16 +73,22 @@ while True:
     
     ret, frame = vid.read()
     frame, mask = AnalyseImage(frame)
-    
-    if  pressedKey == ord('q'):
-        break
+    features = getFeatures(frame, mask)
     
         
-    elif pressedKey == ord('s'):
-        cv2.imwrite(f'TrainingData//{label}_{index}.png',frame)
-        cv2.imwrite(f'TrainingData//{label}_{index}.mask.png',mask)
-        index +=1
-
+    
+    if pressedKey == ord('q'):
+        break
+    
+    
+    if features:
+        print(np.array(list(features.values())[:1]).reshape(1, 1))
+        predictions = model.predict(np.array([list(features.values())[0]]).reshape(1, 1), verbose=None)
+        # predictions = model.predict(np.array(list(features.values())).reshape(1, 6), verbose=None)
+        
+        print(features)
+        print(predictions)
+        print(all_labels[np.argmax(predictions[0])])
 
 
 cv2.destroyAllWindows()
