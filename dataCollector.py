@@ -25,7 +25,7 @@ def update_BLURBar(val):
     BLUR = val
 
 cv2.namedWindow("Trackbars")
-
+cv2.resizeWindow("Trackbars", 400, 100)
 cv2.createTrackbar('Threshold', "Trackbars", THRESHOLD, 100, update_THRESHOLDBar)
 cv2.createTrackbar('Blur', "Trackbars", BLUR, 50, update_BLURBar)
 
