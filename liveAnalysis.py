@@ -6,7 +6,10 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from sharedFunctions import most_frequent_color, getFeatures
 
-all_labels = ["braunglas", "gruenglas", "weissglas", "keinglas"]
+all_labels = {"braunglas": (15, 86, 115),
+              "gruenglas": (10, 138, 29),
+              "weissglas": (211, 245, 243),
+              "keinglas": (0, 0, 255)}
 
 global THRESHOLD
 global BLUR
@@ -28,7 +31,7 @@ cv2.createTrackbar('Blur', "Trackbars", BLUR, 50, update_BLURBar)
 
 vid = cv2.VideoCapture(1, cv2.CAP_DSHOW) 
 
-model = load_model("model.keras")
+model = load_model("model_with_noglass.keras")
 
 
 def AnalyseImage(frame):
@@ -67,29 +70,31 @@ def AnalyseImage(frame):
 
 ret, frame = vid.read()
 mask = None
+
 while True:
+    ret, frame = vid.read()
+    frame, mask = AnalyseImage(frame)
+    try:
+        features = getFeatures(frame, mask)
+    except ZeroDivisionError:
+        features = None
+
+    if features:
+        predictions = model.predict(np.array(list(features.values())).reshape(1, 6), verbose=None)
+        ## get the min enclosing rectangle around the mask
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            largest_contour = max(contours, key=cv2.contourArea)
+            x, y, w, h = cv2.boundingRect(largest_contour)
+            cv2.rectangle(frame, (x, y), (x+w, y+h), list(all_labels.values())[np.argmax(predictions)], 2)
+            
+            cv2.putText(frame, list(all_labels.keys())[np.argmax(predictions)], (x, y+50), cv2.FONT_HERSHEY_SIMPLEX, .7, list(all_labels.values())[np.argmax(predictions)], 2, cv2.LINE_AA)
+    
     cv2.imshow("BrarwurstSchnitzelbroetchen",frame)
     pressedKey = cv2.waitKey(50)
     
-    ret, frame = vid.read()
-    frame, mask = AnalyseImage(frame)
-    features = getFeatures(frame, mask)
-    
-        
-    
     if pressedKey == ord('q'):
         break
-    
-    
-    if features:
-        # print(np.array(list(features.values())[:1]).reshape(1, 1))
-        # predictions = model.predict(np.array([list(features.values())[0]]).reshape(1, 1), verbose=None)
-        predictions = model.predict(np.array(list(features.values())).reshape(1, 6), verbose=None)
-        
-        print(features)
-        print(predictions)
-        print(all_labels[np.argmax(predictions[0])])
-
 
 cv2.destroyAllWindows()
 vid.release()
