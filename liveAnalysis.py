@@ -13,8 +13,8 @@ all_labels = {"braunglas": (15, 86, 115),
 
 global THRESHOLD
 global BLUR
-THRESHOLD = 80
-BLUR = 35
+THRESHOLD = 63
+BLUR = 41
 
 def update_THRESHOLDBar(val):
     global THRESHOLD     
@@ -29,7 +29,7 @@ cv2.namedWindow("Trackbars")
 cv2.createTrackbar('Threshold', "Trackbars", THRESHOLD, 100, update_THRESHOLDBar)
 cv2.createTrackbar('Blur', "Trackbars", BLUR, 50, update_BLURBar)
 
-vid = cv2.VideoCapture(1, cv2.CAP_DSHOW) 
+vid = cv2.VideoCapture(0, cv2.CAP_DSHOW) 
 
 model = load_model("model_with_noglass.keras")
 
@@ -85,9 +85,10 @@ while True:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if contours:
             largest_contour = max(contours, key=cv2.contourArea)
-            x, y, w, h = cv2.boundingRect(largest_contour)
+            x, y, w, h = cv2.boundingRect(largest_contour)d
             cv2.rectangle(frame, (x, y), (x+w, y+h), list(all_labels.values())[np.argmax(predictions)], 2)
-            
+            ## make a border around the text
+            cv2.putText(frame, list(all_labels.keys())[np.argmax(predictions)], (x, y+50), cv2.FONT_HERSHEY_SIMPLEX, .7, (0, 0, 0), 4, cv2.LINE_AA)
             cv2.putText(frame, list(all_labels.keys())[np.argmax(predictions)], (x, y+50), cv2.FONT_HERSHEY_SIMPLEX, .7, list(all_labels.values())[np.argmax(predictions)], 2, cv2.LINE_AA)
     
     cv2.imshow("BrarwurstSchnitzelbroetchen",frame)
